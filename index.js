@@ -1,60 +1,51 @@
 function Mandlebrot(canvas) {
-
-    var ITERATIONS = 300;
+    var ITERATIONS = 500;
     var _context = canvas.getContext("2d");
 
     this.Scale = 2.5 / Math.min(_context.canvas.width, _context.canvas.height);
     this.OffsetX = -.5;
     this.OffsetY = 0;
-
-    var iterate = (Cr, Ci, escapeRadius, maxIterations) => {
-        var Zr = 0;
-        var Zi = 0;
-        var Tr = 0;
-        var Ti = 0;
-        var n = 0;
-
-        while (n++ < maxIterations && (Tr + Ti) < escapeRadius) {
-            Zi = 2 * (Zr * Zi) + Ci;
-            Zr = Tr - Ti + Cr;
-            Tr = Zr * Zr;
-            Ti = Zi * Zi;
-        }
-
-        return n;
-    }
-
-    var multisample = (Cr, Ci, escapeRadius, maxIterations) => {
-        var n = iterate(Cr + this.Scale / 2, Ci, 4, ITERATIONS);
-        n += iterate(Cr + this.Scale / 2, Ci, 4, ITERATIONS);
-        n += iterate(Cr + this.Scale / 2, Ci + this.Scale / 2, 4, ITERATIONS);
-        n += iterate(Cr, Ci + this.Scale / 2, 4, ITERATIONS);
-        return n / 4;
-    }
-
-    var drawLine = (y) => {
-        var yOff = y * _context.canvas.width;
-        var imgData = _context.getImageData(0, y, _context.canvas.width, 1);
-        var y0 = this.OffsetY + (y - (_context.canvas.height / 2)) * this.Scale;
-        var x0 = this.OffsetX - (_context.canvas.width / 2) * this.Scale;
-
-        var pixel = 0;
-        for (var x = 0; x < _context.canvas.width; x++ , pixel += 4, x0 += this.Scale) {
-
-            var n = multisample(x0, y0, 4, ITERATIONS);
-            imgData.data[pixel] = n < ITERATIONS ? Math.floor(255.0 * (n / (ITERATIONS - 1.0))) : 0;
-            imgData.data[pixel + 3] = 255;
-        }
-
-        _context.putImageData(imgData, 0, y);
-
-        if (y < _context.canvas.height) {
-            drawLine(y + 1);
-        }
-    }
+    this.isRendering = false;
 
     this.render = () => {
-        drawLine(0);
+        if (this.isRendering)
+            return;
+        this.isRendering = true;
+
+        var y = 0;
+        var self = this;
+
+        var running = 0;
+        for (var i = 0; i < 8; i++) {
+            var worker = new Worker("iterationworker.js");
+            PostData(y++, worker);
+            running++;
+
+            worker.onmessage = function (e) {
+
+                _context.putImageData(e.data, 0, this.y);
+
+                if (y < canvas.height) {
+                    PostData(y++, this);
+                }
+                else {
+                    this.terminate();
+                    if (--running === 0)
+                        self.isRendering = false;
+                }
+            }
+        }
+
+        function PostData(y, worker) {
+            worker.y = y;
+            worker.postMessage({
+                y0: self.OffsetY + (y - (_context.canvas.height / 2)) * self.Scale,
+                x0: self.OffsetX - (_context.canvas.width / 2) * self.Scale,
+                scale: self.Scale,
+                imageData: _context.getImageData(0, y, _context.canvas.width, 1),
+                iterations: ITERATIONS
+            });
+        }
     }
 }
 
@@ -69,7 +60,7 @@ window.onload = function () {
     mousecontrols.height = window.innerHeight;
     var selectionContext = mousecontrols.getContext("2d");
     selectionContext.strokeStyle = "#FF0000";
-    selectionContext.setLineDash( [2,4] );
+    selectionContext.setLineDash([2, 4]);
 
     var set = new Mandlebrot(canvas);
     set.render();
@@ -78,6 +69,8 @@ window.onload = function () {
     var dragStartY;
 
     window.onmousedown = (e) => {
+        if (set.isRendering)
+            return;
         dragStartX = e.clientX;
         dragStartY = e.clientY;
     }
@@ -90,8 +83,11 @@ window.onload = function () {
     }
 
     window.onmouseup = (e) => {
-        if (dragStartX === undefined)
+        mousecontrols.getContext("2d").clearRect(0, 0, mousecontrols.width, mousecontrols.height);
+
+        if (dragStartX === undefined || set.isRendering)
             return;
+
         var x1 = (canvas.width / mousecontrols.width) * (dragStartX - mousecontrols.width / 2) * set.Scale + set.OffsetX;
         var x2 = (canvas.width / mousecontrols.width) * (e.clientX - mousecontrols.width / 2) * set.Scale + set.OffsetX;
         var y1 = (canvas.height / mousecontrols.height) * (dragStartY - mousecontrols.height / 2) * set.Scale + set.OffsetY;
@@ -103,7 +99,6 @@ window.onload = function () {
         set.render();
 
         dragStartX = dragStartY = undefined;
-        mousecontrols.getContext("2d").clearRect(0, 0, mousecontrols.width, mousecontrols.height);
     }
 
     window.onresize = function () {
@@ -112,7 +107,7 @@ window.onload = function () {
         mousecontrols.width = window.innerWidth;
         mousecontrols.height = window.innerHeight;
         selectionContext.strokeStyle = "#FF0000";
-        selectionContext.setLineDash( [2,4] );
+        selectionContext.setLineDash([2, 4]);
         set.render();
     }
 }
