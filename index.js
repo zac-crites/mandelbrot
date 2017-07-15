@@ -67,6 +67,9 @@ window.onload = function () {
     var mousecontrols = document.getElementById("controlcanvas");
     mousecontrols.width = window.innerWidth;
     mousecontrols.height = window.innerHeight;
+    var selectionContext = mousecontrols.getContext("2d");
+    selectionContext.strokeStyle = "#FF0000";
+    selectionContext.setLineDash( [2,4] );
 
     var set = new Mandlebrot(canvas);
     set.render();
@@ -82,11 +85,8 @@ window.onload = function () {
     window.onmousemove = (e) => {
         if (dragStartX === undefined)
             return;
-        var c = mousecontrols.getContext("2d");
-        c.clearRect(0, 0, mousecontrols.width, mousecontrols.height);
-        c.strokeStyle = "#FF0000";
-        c.lineWidth = 1;
-        c.strokeRect(dragStartX, dragStartY, e.clientX - dragStartX, e.clientY - dragStartY);
+        selectionContext.clearRect(0, 0, mousecontrols.width, mousecontrols.height);
+        selectionContext.strokeRect(dragStartX - .5, dragStartY - .5, e.clientX - dragStartX, e.clientY - dragStartY);
     }
 
     window.onmouseup = (e) => {
@@ -111,7 +111,8 @@ window.onload = function () {
         canvas.height = window.innerHeight;
         mousecontrols.width = window.innerWidth;
         mousecontrols.height = window.innerHeight;
-
+        selectionContext.strokeStyle = "#FF0000";
+        selectionContext.setLineDash( [2,4] );
         set.render();
     }
 }
