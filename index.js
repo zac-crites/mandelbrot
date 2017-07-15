@@ -1,10 +1,10 @@
 function Mandlebrot(canvas) {
-    var ITERATIONS = 500;
     var _context = canvas.getContext("2d");
 
-    this.Scale = 2.5 / Math.min(_context.canvas.width, _context.canvas.height);
-    this.OffsetX = -.5;
-    this.OffsetY = 0;
+    this.iterations = 500;
+    this.scale = 2.5 / Math.min(_context.canvas.width, _context.canvas.height);
+    this.offsetX = -.5;
+    this.offsetY = 0;
     this.isRendering = false;
 
     this.render = () => {
@@ -39,11 +39,11 @@ function Mandlebrot(canvas) {
         function PostData(y, worker) {
             worker.y = y;
             worker.postMessage({
-                y0: self.OffsetY + (y - (_context.canvas.height / 2)) * self.Scale,
-                x0: self.OffsetX - (_context.canvas.width / 2) * self.Scale,
-                scale: self.Scale,
+                y0: self.offsetY + (y - (_context.canvas.height / 2)) * self.scale,
+                x0: self.offsetX - (_context.canvas.width / 2) * self.scale,
+                scale: self.scale,
                 imageData: _context.getImageData(0, y, _context.canvas.width, 1),
-                iterations: ITERATIONS
+                iterations: self.iterations
             });
         }
     }
@@ -58,6 +58,7 @@ window.onload = function () {
     var mousecontrols = document.getElementById("controlcanvas");
     mousecontrols.width = window.innerWidth;
     mousecontrols.height = window.innerHeight;
+    
     var selectionContext = mousecontrols.getContext("2d");
     selectionContext.strokeStyle = "#FF0000";
     selectionContext.setLineDash([2, 4]);
@@ -67,35 +68,36 @@ window.onload = function () {
 
     var dragStartX;
     var dragStartY;
+    var controldiv = document.getElementById("mouseevents");
 
-    window.onmousedown = (e) => {
-        if (set.isRendering)
-            return;
+    controldiv.ontouchstart = controldiv.onmousedown = (e) => {
+       if (set.isRendering)
+           return;
         dragStartX = e.clientX;
         dragStartY = e.clientY;
     }
 
-    window.onmousemove = (e) => {
+    controldiv.ontouchmove = controldiv.onmousemove = (e) => {
         if (dragStartX === undefined)
             return;
         selectionContext.clearRect(0, 0, mousecontrols.width, mousecontrols.height);
         selectionContext.strokeRect(dragStartX - .5, dragStartY - .5, e.clientX - dragStartX, e.clientY - dragStartY);
     }
 
-    window.onmouseup = (e) => {
+    controldiv.ontouchend = controldiv.onmouseup = (e) => {
         mousecontrols.getContext("2d").clearRect(0, 0, mousecontrols.width, mousecontrols.height);
 
         if (dragStartX === undefined || set.isRendering)
             return;
 
-        var x1 = (canvas.width / mousecontrols.width) * (dragStartX - mousecontrols.width / 2) * set.Scale + set.OffsetX;
-        var x2 = (canvas.width / mousecontrols.width) * (e.clientX - mousecontrols.width / 2) * set.Scale + set.OffsetX;
-        var y1 = (canvas.height / mousecontrols.height) * (dragStartY - mousecontrols.height / 2) * set.Scale + set.OffsetY;
-        var y2 = (canvas.height / mousecontrols.height) * (e.clientY - mousecontrols.height / 2) * set.Scale + set.OffsetY;
+        var x1 = (canvas.width / mousecontrols.width) * (dragStartX - mousecontrols.width / 2) * set.scale + set.offsetX;
+        var x2 = (canvas.width / mousecontrols.width) * (e.clientX - mousecontrols.width / 2) * set.scale + set.offsetX;
+        var y1 = (canvas.height / mousecontrols.height) * (dragStartY - mousecontrols.height / 2) * set.scale + set.offsetY;
+        var y2 = (canvas.height / mousecontrols.height) * (e.clientY - mousecontrols.height / 2) * set.scale + set.offsetY;
 
-        set.Scale = Math.max(Math.abs(x1 - x2) / canvas.width, Math.abs(y1 - y2) / canvas.height);
-        set.OffsetX = (x1 + x2) / 2;
-        set.OffsetY = (y1 + y2) / 2;
+        set.scale = Math.max(Math.abs(x1 - x2) / canvas.width, Math.abs(y1 - y2) / canvas.height);
+        set.offsetX = (x1 + x2) / 2;
+        set.offsetY = (y1 + y2) / 2;
         set.render();
 
         dragStartX = dragStartY = undefined;
