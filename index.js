@@ -20,7 +20,8 @@ function Mandlebrot(canvas) {
         var self = this;
 
         var running = 0;
-        for (var i = 0; i < 8; i++) {
+        var threads = navigator.hardwareConcurrency || 8;
+        for (var i = 0; i < threads; i++) {
             var worker = new Worker("iterationworker.js");
             PostData(nextRenderY++, worker);
             running++;
