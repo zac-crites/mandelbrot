@@ -49,6 +49,50 @@ function Mandlebrot(canvas) {
     }
 }
 
+function Display(set) {
+    var menu = document.getElementById("mainmenu");
+    var iterationsDisplay = document.getElementById("iterationsDisplay");
+    var xDisplay = document.getElementById("xOffsetDisplay");
+    var yDisplay = document.getElementById("yOffsetDisplay");
+    var scaleDisplay = document.getElementById("scaleDisplay");
+    var renderbutton = document.getElementById("renderbutton");
+
+    renderbutton.onclick = () => {
+        this.commit();
+        set.render();
+    }
+
+    this.commit = () => {
+        var iterations = parseInt(iterationsDisplay.value);
+        if (!isNaN(iterations))
+            set.iterations = iterations;
+
+        var offsetX = parseFloat( xDisplay.value );
+        if (!isNaN(offsetX))
+            set.offsetX = offsetX;
+
+        var offsetY = parseFloat( yDisplay.value );
+        if (!isNaN(offsetY))
+            set.offsetY = offsetY;
+
+        var zoom = parseFloat( scaleDisplay.value );
+        if (!isNaN(zoom))
+            set.scale = zoom;
+    }
+
+    this.update = () => {
+        xDisplay.value = set.offsetX;
+        yDisplay.value = set.offsetY;
+        scaleDisplay.value = set.scale;
+        iterationsDisplay.value = set.iterations;
+    }
+
+    this.toggle = () => {
+        this.update();
+        menu.style.display = (menu.style.display === "block") ? "none" : "block";
+    }
+}
+
 window.onload = function () {
 
     var canvas = document.getElementById("fractalcanvas");
@@ -58,7 +102,7 @@ window.onload = function () {
     var mousecontrols = document.getElementById("controlcanvas");
     mousecontrols.width = window.innerWidth;
     mousecontrols.height = window.innerHeight;
-    
+
     var selectionContext = mousecontrols.getContext("2d");
     selectionContext.strokeStyle = "#FF0000";
     selectionContext.setLineDash([2, 4]);
@@ -66,13 +110,20 @@ window.onload = function () {
     var set = new Mandlebrot(canvas);
     set.render();
 
+    var hud = new Display(set);
+    hud.update();
     var dragStartX;
     var dragStartY;
     var controldiv = document.getElementById("mouseevents");
 
+    window.onkeydown = (e) => {
+        if (e.keyCode === 77)
+            hud.toggle();
+    }
+
     controldiv.ontouchstart = controldiv.onmousedown = (e) => {
-       if (set.isRendering)
-           return;
+        if (set.isRendering)
+            return;
         dragStartX = e.clientX;
         dragStartY = e.clientY;
     }
@@ -87,8 +138,16 @@ window.onload = function () {
     controldiv.ontouchend = controldiv.onmouseup = (e) => {
         mousecontrols.getContext("2d").clearRect(0, 0, mousecontrols.width, mousecontrols.height);
 
-        if (dragStartX === undefined || set.isRendering)
+        if (dragStartX === undefined|| dragStartY === undefined )
             return;
+
+        if( dragStartX === e.clientX || dragStartY === e.clientY || set.isRendering )
+        {
+            dragStartX = dragStartY = undefined;
+            return;
+        }
+
+        hud.commit();
 
         var x1 = (canvas.width / mousecontrols.width) * (dragStartX - mousecontrols.width / 2) * set.scale + set.offsetX;
         var x2 = (canvas.width / mousecontrols.width) * (e.clientX - mousecontrols.width / 2) * set.scale + set.offsetX;
@@ -98,6 +157,8 @@ window.onload = function () {
         set.scale = Math.max(Math.abs(x1 - x2) / canvas.width, Math.abs(y1 - y2) / canvas.height);
         set.offsetX = (x1 + x2) / 2;
         set.offsetY = (y1 + y2) / 2;
+
+        hud.update();
         set.render();
 
         dragStartX = dragStartY = undefined;

@@ -30,6 +30,56 @@
             width: 100%;
             height: 100%;
         }
+
+        #mainmenu {
+            position: fixed;
+            left: 10px;
+            top: 10px;
+            border: 1px solid #555555;
+            background: #000000;
+            z-index: 2;
+            color: #888888;
+            font-family: monospace;
+            display: none;
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+
+        #mainmenu input[type=text] {
+            background: #111111;
+            border: 1px solid #444444;
+            font-family: monospace;
+            color: #888888;
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+
+        #mainmenu button {
+            border: 1px solid #444444;
+            background: #111111;
+            color: #888888;
+            font-family: monospace;
+            padding-left: 5px;
+            padding-right: 5px;
+            margin-top: 5px;
+            margin-left: 5px;
+            text-align: right;
+            float: right;
+        }
+
+        #mainmenu button:hover {
+            background: #444444;
+        }
+
+        .table .tr {
+            display: table-row; 
+        }
+
+        .table .tr .td {
+            display: table-cell; 
+            padding-left: 5px;
+            padding-right: 5px;
+        }
     </style>
 </head>
 
@@ -37,6 +87,28 @@
     <canvas id="fractalcanvas"></canvas>
     <canvas id="controlcanvas"></canvas>
     <div id="mouseevents"></div>
+    <div id="mainmenu" class="table">
+        <div class="tr">
+            <div class="td">Iterations</div>
+            <div class="td" ><input id="iterationsDisplay" type="text"></input></div>
+        </div>
+        <div class="tr">
+            <div class="td">Center X</div>
+            <div class="td" ><input id="xOffsetDisplay" type="text"></input></div>
+        </div>
+        <div class="tr">
+            <div class="td">Center Y</div>
+            <div class="td" ><input id="yOffsetDisplay" type="text"></input></div>
+        </div>
+        <div class="tr">
+            <div class="td">Zoom</div>
+            <div class="td" ><input id="scaleDisplay" type="text"></input></div>
+        </div>
+        <div class="tr">
+            <div class="td"></div>
+            <div class="td"><button id="renderbutton">Render</button></div>
+        </div>
+    </div>
     <script src="index.js"></script>
 </body>
 
