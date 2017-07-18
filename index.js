@@ -124,12 +124,20 @@ window.onload = function () {
     controldiv.ontouchstart = controldiv.onmousedown = (e) => {
         if (set.isRendering)
             return;
+
+        if( e.shiftKey ) {
+            hud.commit();
+            set.scale *= 2;
+            hud.update();
+            set.render();
+        }
+
         dragStartX = e.clientX;
         dragStartY = e.clientY;
     }
 
     controldiv.ontouchmove = controldiv.onmousemove = (e) => {
-        if (dragStartX === undefined)
+        if (dragStartX === undefined || dragStartY === undefined )
             return;
         selectionContext.clearRect(0, 0, mousecontrols.width, mousecontrols.height);
         selectionContext.strokeRect(dragStartX - .5, dragStartY - .5, e.clientX - dragStartX, e.clientY - dragStartY);
