@@ -7,26 +7,30 @@ function Mandlebrot(canvas) {
     this.offsetY = 0;
     this.isRendering = false;
 
+    var nextRenderY = 0;
     this.render = () => {
         if (this.isRendering)
+        {
+            nextRenderY = 0;
             return;
+        }
         this.isRendering = true;
 
-        var y = 0;
+        nextRenderY = 0;
         var self = this;
 
         var running = 0;
         for (var i = 0; i < 8; i++) {
             var worker = new Worker("iterationworker.js");
-            PostData(y++, worker);
+            PostData(nextRenderY++, worker);
             running++;
 
             worker.onmessage = function (e) {
 
                 _context.putImageData(e.data, 0, this.y);
 
-                if (y < canvas.height) {
-                    PostData(y++, this);
+                if (nextRenderY < canvas.height) {
+                    PostData(nextRenderY++, this);
                 }
                 else {
                     this.terminate();
